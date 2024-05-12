@@ -1,0 +1,93 @@
+#navbar {
+  transition: all 0.5s;
+}
+
+#navbar.scrolled {
+  background-color: white;
+  box-shadow: 0px 2px 20px rgba(1, 41, 112, 0.1);
+  padding: 15px;
+}
+
+.nav-item:hover {
+  color: #4154f1;
+}
+
+.nav-item[current-page="true"] {
+  color: #4154f1;
+}
+
+.sidebar-item[current-page="true"] {
+  color: black;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.beranda {
+  background: url(https://students-apps.yarsi.ac.id/students02/graduate/public/front/assets/img/hero-bg.png);
+  background-size: cover;
+  height: 100vh;
+  background-attachment: fixed;
+}
+
+.list-wisuda .flex {
+  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.08);
+}
+
+.fa-icon {
+  transition: all 0.5s;
+}
+
+.tombol-cta:hover .fa-icon {
+  transform: translateX(5px);
+}
+
+.syarat-item {
+  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.08);
+}
+
+.ikon-ceklis {
+  background: #ecf3ff;
+  padding: 4px;
+  margin-right: 10px;
+  transition: all 0.3s;
+}
+
+.syarat-item:hover .ikon-ceklis {
+  background: #4154f1;
+  color: #fff;
+}
+
+.footer .footer-top {
+  background: url(https://students-apps.yarsi.ac.id/students02/graduate/public/front/assets/img/footer-bg.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position-x: right;
+  border-top: 1px solid #e1ecff;
+  border-bottom: 1px solid #e1ecff;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.copyright {
+  background-color: #f6f9ff;
+}
+
+.header-persyaratan {
+  margin-top: 5rem;
+}
+
+.tabel-costum th,
+.tabel-costum td {
+  border: 2px solid #dee2e6;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.konten .card:hover .icon {
+  transform: scale(1.1);
+}
+
+@media (max-width: 512px) {
+  .footer .footer-top {
+    background-position: bottom;
+  }
+}
