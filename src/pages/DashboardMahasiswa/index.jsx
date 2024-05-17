@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import Sidebar from "../../components/sidebar";
+import { faBars, faCheck, faMaximize, faRightFromBracket, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faMaximize, faRightFromBracket, faTimes } from "@fortawesome/free-solid-svg-icons";
-import MainLayouts from "../../layout";
+import React, { useState } from "react";
+import AdminLayout from "../../layout/admin-layout";
+import { useNavigate } from "react-router-dom";
 
 const DashboardMahasiswa = () => {
     const [collapsed, setCollapsed] = useState(false);
+    const navigate = useNavigate();
 
     const data = [
         { id: 1, condition: "FotoCopy Berwarna Ijazah SMA", status: false },
@@ -38,11 +39,15 @@ const DashboardMahasiswa = () => {
             }
         }
     };
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        navigate("/login");
+    };
     return (
-        <MainLayouts>
-            <Sidebar isOpen={collapsed} />
-            {/* Navbar */}
+        <AdminLayout>
             <div className="w-5/6 h-[92vh] ml-auto">
+                {/* Navbar */}
                 <nav className="bg-white px-3 py-5 flex items-center justify-between shadow-md relative">
                     <div className="flex items-center">
                         <button onClick={() => setCollapsed(!collapsed)} className="text-[#00000080] hover:text-black focus:outline-none">
@@ -54,7 +59,7 @@ const DashboardMahasiswa = () => {
                         <button onClick={layarPenuh} className="text-[#00000080] hover:text-black focus:outline-none">
                             <FontAwesomeIcon icon={faMaximize} />
                         </button>
-                        <div className="flex items-center text-[#00000080] hover:text-black">
+                        <div onClick={handleLogout} className="flex items-center text-[#00000080] hover:text-black cursor-pointer">
                             <FontAwesomeIcon icon={faRightFromBracket} />
                             <span className="text-base ms-2">Logout</span>
                         </div>
@@ -74,21 +79,15 @@ const DashboardMahasiswa = () => {
                     <h1 className="text-2xl text-black my-4 font-bold">Persyaratan Wisuda</h1>
                     <div className="grid grid-cols-2 gap-4">
                         {data.map((item) => (
-                            <div key={item.id} className={`bg-white border-l-4 p-4 shadow-md ${item.status ? "border-green-500" : "border-red-500"}`} role="alert">
+                            <div key={item.id} className={`bg-white border-l-4 flex items-center p-4 shadow-md ${item.status ? "border-green-500" : "border-red-500"}`} role="alert">
+                                <FontAwesomeIcon icon={item.status ? faCheck : faTimes} className={`me-2 ${item.status ? "text-green-500" : "text-red-500"}`} />
                                 <h2 className="font-medium text-black">{item.condition}</h2>
                             </div>
                         ))}
                     </div>
                 </section>
-
-                <footer className="text-[#869099] text-base bg-white text-center border-t-2 py-4">
-                    <strong className="me-1">
-                        Copyright © 2024 <span className="text-blue-600">The Graduate</span>.
-                    </strong>
-                    All rights reserved.
-                </footer>
             </div>
-        </MainLayouts>
+        </AdminLayout>
     );
 };
 

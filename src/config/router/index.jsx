@@ -10,22 +10,43 @@ import DashboardAdmin from "../../pages/DashboardAdmin/dashboard-admin";
 import Dosen from "../../pages/DashboardAdmin/dosen";
 import Mahasiswa from "../../pages/DashboardAdmin/mahasiswa";
 import Tendik from "../../pages/DashboardAdmin/tendik";
+import SKLMahasiswa from "../../pages/SKLMahasiswa";
+import PengambilanIjazahMahasiswa from "../../pages/PengambilanIjazahMahasiswa";
+import PersyaratanAdmin from "../../pages/DashboardAdmin/persyaratan-admin";
+import PendaftaranMasuk from "../../pages/DashboardAdmin/pendaftaran-masuk";
+import DashboardDosen from "../../pages/Dashboard Dosen/dashboard-dosen";
+import BerkasDosen from "../../pages/Dashboard Dosen/berkas-dosen";
+import SertifikatKompetensi from "../../pages/Dashboard Dosen/sertifikat-kompetensi";
+import CalonWisuda from "../../pages/DashboardAdmin/calon-wisuda";
+import Register from "../../pages/Auth/Register";
 
 const Router = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Beranda />} />
-      <Route path="/persyaratan" element={<Persyaratan />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin/dashboard-admin" element={<DashboardAdmin />} />
-      <Route path="/admin/dosen" element={<Dosen />} />
-      <Route path="/admin/mahasiswa" element={<Mahasiswa />} />
-      <Route path="/admin/tendik" element={<Tendik />} />
-      <Route path="/admin/berkas" element={<Berkas />} />
-      <Route path="/dashboard-mahasiswa" element={<DashboardMahasiswa />} />
-      <Route path="/pendaftaran-wisuda" element={<PendaftaranWisuda />} />
-    </Routes>
-  );
+    return (
+        <Routes>
+            <Route path="/" element={<Beranda />} />
+            <Route path="/persyaratan" element={<Persyaratan />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            {/* Dashboard Admin */}
+            <Route path="/admin/dashboard-admin" element={<DashboardAdmin />} />
+            <Route path="/admin/dosen" element={<Dosen />} />
+            <Route path="/admin/mahasiswa" element={<Mahasiswa />} />
+            <Route path="/admin/tendik" element={<Tendik />} />
+            <Route path="/admin/berkas" element={<Berkas />} />
+            <Route path="/admin/pendaftaran" element={<PendaftaranMasuk />} />
+            <Route path="/admin/persyaratan" element={<PersyaratanAdmin />} />
+            <Route path="/admin/calon-wisuda" element={<CalonWisuda />} />
+            {/* Dashboard Mahasiswa */}
+            <Route path="/mahasiswa/dashboard-mahasiswa" element={<DashboardMahasiswa />} />
+            <Route path="/mahasiswa/pendaftaran-wisuda" element={<PendaftaranWisuda />} />
+            <Route path="/mahasiswa/skl" element={<SKLMahasiswa />} />
+            <Route path="/mahasiswa/pengambilan-ijazah" element={<PengambilanIjazahMahasiswa />} />
+            {/* Dashboard Dosen */}
+            <Route path="/dosen/dashboard-dosen" element={<DashboardDosen />} />
+            <Route path="/dosen/berkas" element={<BerkasDosen />} />
+            <Route path="/dosen/sertifikat" element={<SertifikatKompetensi />} />
+        </Routes>
+    );
 };
 
 export default Router;

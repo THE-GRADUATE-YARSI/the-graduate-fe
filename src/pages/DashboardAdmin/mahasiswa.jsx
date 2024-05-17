@@ -127,31 +127,7 @@ function Mahasiswa() {
 
   return (
     <AdminLayout>
-      <div className="w-5/6 h-[93vh] ml-auto">
-        {/* navbar */}
-        <nav className="bg-white px-8 py-4 flex justify-between relative border-2 border-x-0 border-t-0 border-b-[#dee2e6]">
-          <div className="flex items-center relative w-full">
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="text-black focus:outline-none"
-            >
-              <FontAwesomeIcon icon={collapsed ? faTimes : faBars} />
-            </button>
-            <div className="relative ml-auto ">
-              <BsBell className="text-slate-600" />
-
-              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
-            </div>
-            <div className="mx-8 text-slate-600">
-              <FontAwesomeIcon icon={faExpandArrowsAlt} />
-            </div>
-            <a href="" className="text-slate-600">
-              <FontAwesomeIcon icon={faSignOutAlt} className="mr-1" />
-              Logout
-            </a>
-          </div>
-        </nav>
-
+      <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
         {/* berkas */}
         <div className="berkas p-5 bg-[#f4f6f9] h-full">
           <div className="judul">
@@ -451,9 +427,9 @@ function Mahasiswa() {
                           aria-hidden="true"
                         >
                           <path
-                            fill-rule="evenodd"
+                            fillRule="evenodd"
                             d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                            clip-rule="evenodd"
+                            clipRule="evenodd"
                           />
                         </svg>
                       </a>
@@ -510,9 +486,9 @@ function Mahasiswa() {
                           aria-hidden="true"
                         >
                           <path
-                            fill-rule="evenodd"
+                            fillRule="evenodd"
                             d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                            clip-rule="evenodd"
+                            clipRule="evenodd"
                           />
                         </svg>
                       </a>

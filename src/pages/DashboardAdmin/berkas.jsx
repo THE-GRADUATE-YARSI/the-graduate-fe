@@ -19,6 +19,7 @@ import AdminLayout from "../../layout/admin-layout";
 function Berkas() {
   const [collapsed, setCollapsed] = useState(false);
   const [dropdownIndex, setDropdownIndex] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleDropdown = (index) => {
     setDropdownIndex(index === dropdownIndex ? null : index);
@@ -39,6 +40,60 @@ function Berkas() {
     },
     {
       id: 3,
+      npm: "1502019001",
+      nama: "Adinda Triani Septianti",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 4,
+      npm: "1502019002",
+      nama: "Afifah Nurhayati",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 5,
+      npm: "1502019004",
+      nama: "Aliifah Putri Pravity",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 6,
+      npm: "1502019001",
+      nama: "Adinda Triani Septianti",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 7,
+      npm: "1502019002",
+      nama: "Afifah Nurhayati",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 8,
+      npm: "1502019004",
+      nama: "Aliifah Putri Pravity",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 9,
+      npm: "1502019001",
+      nama: "Adinda Triani Septianti",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 10,
+      npm: "1502019002",
+      nama: "Afifah Nurhayati",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 11,
+      npm: "1502019004",
+      nama: "Aliifah Putri Pravity",
+      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
+    },
+    {
+      id: 12,
       npm: "1502019001",
       nama: "Adinda Triani Septianti",
       prodi: "Perpustakaan dan Sains Informasi (PdSI)",
@@ -81,36 +136,11 @@ function Berkas() {
     return data;
   };
 
-  console.log(sortInfo);
   return (
-    <AdminLayout>
-      <div className="w-5/6 h-[93vh] ml-auto">
-        {/* navbar */}
-        <nav className="bg-white px-8 py-4 flex justify-between relative border-2 border-x-0 border-t-0 border-b-[#dee2e6]">
-          <div className="flex items-center relative w-full">
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="text-black focus:outline-none"
-            >
-              <FontAwesomeIcon icon={collapsed ? faTimes : faBars} />
-            </button>
-            <div className="relative ml-auto ">
-              <BsBell className="text-slate-600" />
-
-              <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
-            </div>
-            <div className="mx-8 text-slate-600">
-              <FontAwesomeIcon icon={faExpandArrowsAlt} />
-            </div>
-            <a href="" className="text-slate-600">
-              <FontAwesomeIcon icon={faSignOutAlt} className="mr-1" />
-              Logout
-            </a>
-          </div>
-        </nav>
-
+    <AdminLayout isSidebarOpen={isSidebarOpen}>
+      <div className={`min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10 `}>
         {/* berkas */}
-        <div className="berkas p-5 bg-[#f4f6f9] h-full">
+        <div className="berkas p-5 bg-[#f4f6f9] h-full ">
           <div className="judul">
             <h1 className="lg:text-3xl text-3xl mb-5 font-medium text-[#212529]">
               Berkas

@@ -1,6 +1,6 @@
 function AdminFooter() {
   return (
-    <footer className="text-center ml-auto bg-white w-5/6 p-5 border-t-1 border-[#dee2e6] bottom-0 relative">
+    <footer className="text-center bg-white w-5/6 p-5 border-t-2 border-[#dee2e6] bottom-0 ml-auto mt-auto relative">
       <h3 className="text-md text-[#869099]">
         <span className="font-bold mr-1">
           Copyright © 2024

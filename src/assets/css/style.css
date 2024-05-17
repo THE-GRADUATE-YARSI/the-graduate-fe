@@ -17,8 +17,8 @@
 }
 
 .sidebar-item[current-page="true"] {
-  color: black;
-  background-color: rgba(0, 0, 0, 0.1);
+  color: white;
+  background-color: #007bff;
 }
 
 .beranda {
@@ -84,6 +84,14 @@
 
 .konten .card:hover .icon {
   transform: scale(1.1);
+}
+
+.sidebar {
+  transition: all 0.5s;
+}
+
+.konten-utama {
+  transition: all 0.5s;
 }
 
 @media (max-width: 512px) {

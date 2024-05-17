@@ -16,7 +16,9 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@react-icons/all-files": "^4.1.0",
     "aos": "^2.3.4",
+    "axios": "^1.6.8",
     "font-awesome": "^4.7.0",
+    "jwt-decode": "^4.0.0",
     "outline-icons": "^3.2.2",
     "react": "^18.2.0",
     "react-datepicker": "^6.9.0",
@@ -24,7 +26,8 @@
     "react-icons": "^5.1.0",
     "react-router-dom": "^6.22.3",
     "react-spring": "^9.7.3",
-    "styled-components": "^6.1.8"
+    "styled-components": "^6.1.8",
+    "sweetalert2": "^11.11.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
