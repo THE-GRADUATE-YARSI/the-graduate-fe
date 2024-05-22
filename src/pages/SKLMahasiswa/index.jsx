@@ -37,34 +37,9 @@ const SKLMahasiswa = () => {
         setModalName(name);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        navigate("/login");
-    };
-
     return (
         <AdminLayout>
-            <div className="w-5/6 h-[92vh] ml-auto">
-                {/* Navbar */}
-                <nav className="bg-white px-3 py-5 flex items-center justify-between shadow-md relative">
-                    <div className="flex items-center">
-                        <button onClick={() => setCollapsed(!collapsed)} className="text-[#00000080] hover:text-black focus:outline-none">
-                            <FontAwesomeIcon icon={collapsed ? faTimes : faBars} />
-                        </button>
-                        <span className="ms-3 text-2xl text-[#00000080] hover:text-black">Pendaftaran Online Wisuda</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button onClick={layarPenuh} className="text-[#00000080] hover:text-black focus:outline-none">
-                            <FontAwesomeIcon icon={faMaximize} />
-                        </button>
-                        <div onClick={handleLogout} className="flex items-center text-[#00000080] hover:text-black cursor-pointer">
-                            <FontAwesomeIcon icon={faRightFromBracket} />
-                            <span className="text-base ms-2">Logout</span>
-                        </div>
-                    </div>
-                </nav>
-                {/* End of Navbar */}
-
+            <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
                 <section className="skl bg-[#f4f6f9] pt-1 px-3 pb-5 h-full">
                     <h1 className="font-medium text-black text-2xl my-4">Surat Keterangan Lulus</h1>
                     <div className="bg-white border-t-4 border-blue-600 rounded-b text-black px-4 py-3 shadow-sm w-full" role="alert">

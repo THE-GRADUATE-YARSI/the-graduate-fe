@@ -77,28 +77,7 @@ function BerkasDosen() {
     console.log(sortInfo);
     return (
         <AdminLayout>
-            <div className="w-5/6 h-[93vh] ml-auto">
-                {/* navbar */}
-                <nav className="bg-white px-8 py-4 flex justify-between relative border-2 border-x-0 border-t-0 border-b-[#dee2e6]">
-                    <div className="flex items-center relative w-full">
-                        <button onClick={() => setCollapsed(!collapsed)} className="text-black focus:outline-none">
-                            <FontAwesomeIcon icon={collapsed ? faTimes : faBars} />
-                        </button>
-                        <div className="relative ml-auto ">
-                            <BsBell className="text-slate-600" />
-
-                            <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
-                        </div>
-                        <div className="mx-8 text-slate-600">
-                            <FontAwesomeIcon icon={faExpandArrowsAlt} />
-                        </div>
-                        <a href="" className="text-slate-600">
-                            <FontAwesomeIcon icon={faSignOutAlt} className="mr-1" />
-                            Logout
-                        </a>
-                    </div>
-                </nav>
-
+            <div className="in-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
                 {/* berkas */}
                 <div className="berkas p-5 bg-[#f4f6f9] h-full">
                     <div className="judul">

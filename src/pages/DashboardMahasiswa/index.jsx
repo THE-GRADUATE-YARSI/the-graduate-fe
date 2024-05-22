@@ -1,13 +1,9 @@
-import { faBars, faCheck, faMaximize, faRightFromBracket, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState } from "react";
+import React from "react";
 import AdminLayout from "../../layout/admin-layout";
-import { useNavigate } from "react-router-dom";
 
 const DashboardMahasiswa = () => {
-    const [collapsed, setCollapsed] = useState(false);
-    const navigate = useNavigate();
-
     const data = [
         { id: 1, condition: "FotoCopy Berwarna Ijazah SMA", status: false },
         { id: 2, condition: "FotoCopy Berwarna Akte Kelahiran", status: false },
@@ -28,45 +24,9 @@ const DashboardMahasiswa = () => {
         { id: 9, condition: "File Skripsi", status: true },
     ];
 
-    const layarPenuh = () => {
-        if (document.fullscreenEnabled) {
-            if (document.fullscreenElement === null) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        navigate("/login");
-    };
     return (
         <AdminLayout>
-            <div className="w-5/6 h-[92vh] ml-auto">
-                {/* Navbar */}
-                <nav className="bg-white px-3 py-5 flex items-center justify-between shadow-md relative">
-                    <div className="flex items-center">
-                        <button onClick={() => setCollapsed(!collapsed)} className="text-[#00000080] hover:text-black focus:outline-none">
-                            <FontAwesomeIcon icon={collapsed ? faTimes : faBars} />
-                        </button>
-                        <span className="ms-3 text-2xl text-[#00000080] hover:text-black">Pendaftaran Online Wisuda</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button onClick={layarPenuh} className="text-[#00000080] hover:text-black focus:outline-none">
-                            <FontAwesomeIcon icon={faMaximize} />
-                        </button>
-                        <div onClick={handleLogout} className="flex items-center text-[#00000080] hover:text-black cursor-pointer">
-                            <FontAwesomeIcon icon={faRightFromBracket} />
-                            <span className="text-base ms-2">Logout</span>
-                        </div>
-                    </div>
-                </nav>
-                {/* End of Navbar */}
-
+            <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
                 {/* Dashboard Content */}
                 <section className="dashboard-mahasiswa h-full relative bg-[#f4f6f9] p-4">
                     <h1 className="text-2xl text-black mb-4">Dashboard Mahasiswa</h1>
