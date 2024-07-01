@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter as Router, NavLink } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 import MainLayouts from "../../layout";
@@ -15,92 +15,45 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BsBell, BsCaretDownFill } from "react-icons/bs";
 import AdminFooter from "../../components/admin-footer";
 import AdminLayout from "../../layout/admin-layout";
+import { BASE_URL } from "../../config/network";
+import axios from "axios";
+import Modal from "../../components/modal";
+import { openLink } from "../../utils/helpers";
+import Swal from "sweetalert2";
 
 function Berkas() {
   const [collapsed, setCollapsed] = useState(false);
   const [dropdownIndex, setDropdownIndex] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [file, setFile] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const toggleDropdown = (index) => {
     setDropdownIndex(index === dropdownIndex ? null : index);
   };
 
-  const [data, setData] = useState([
-    {
-      id: 1,
-      npm: "1502019002",
-      nama: "Afifah Nurhayati",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 2,
-      npm: "1502019004",
-      nama: "Aliifah Putri Pravity",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 3,
-      npm: "1502019001",
-      nama: "Adinda Triani Septianti",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 4,
-      npm: "1502019002",
-      nama: "Afifah Nurhayati",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 5,
-      npm: "1502019004",
-      nama: "Aliifah Putri Pravity",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 6,
-      npm: "1502019001",
-      nama: "Adinda Triani Septianti",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 7,
-      npm: "1502019002",
-      nama: "Afifah Nurhayati",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 8,
-      npm: "1502019004",
-      nama: "Aliifah Putri Pravity",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 9,
-      npm: "1502019001",
-      nama: "Adinda Triani Septianti",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 10,
-      npm: "1502019002",
-      nama: "Afifah Nurhayati",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 11,
-      npm: "1502019004",
-      nama: "Aliifah Putri Pravity",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-    {
-      id: 12,
-      npm: "1502019001",
-      nama: "Adinda Triani Septianti",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-    },
-  ]);
+  const handleOpenModal = (item, student) => {
+    setSelectedItem(item);
+    setSelectedStudent(student);
+    setShowModal(true);
+  };
 
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    setShowModal(false);
+    setSelectedStudent(null);
+    setFile(null);
+  };
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const [data, setData] = useState([]);
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
+  const [selectedYear, setSelectedYear] = useState("default");
 
   const toggleSort = (type, column) => {
     const newData = [...data];
@@ -110,7 +63,6 @@ function Berkas() {
         if (a[column] > b[column]) return 1;
         return 0;
       });
-      // Perbarui sortInfo dengan kolom dan tipe pengurutan yang baru
       setSortInfo({ column, type: "asc" });
     } else if (type === "desc") {
       newData.sort((a, b) => {
@@ -118,13 +70,11 @@ function Berkas() {
         if (a[column] < b[column]) return 1;
         return 0;
       });
-      // Perbarui sortInfo dengan kolom dan tipe pengurutan yang baru
       setSortInfo({ column, type: "desc" });
     }
     setData(newData);
   };
 
-  // Fungsi untuk mengurutkan data berdasarkan tipe pengurutan dan kolom yang dipilih
   const sortedData = () => {
     if (sortInfo === "asc") {
       return [...data].sort((a, b) => a.nama.localeCompare(b.nama));
@@ -132,14 +82,125 @@ function Berkas() {
     if (sortInfo === "desc") {
       return [...data].sort((a, b) => b.nama.localeCompare(a.nama));
     }
-    // Jika tidak ada pengurutan, kembalikan data tanpa pengurutan
     return data;
   };
+
+  const items = [
+    {
+      name: "Berita Acara",
+      condition: "Berita Acara",
+      endPoint: "/admin/docs/offreport",
+      body: "official_report",
+    },
+    {
+      name: "Undangan",
+      condition: "Undangan",
+      endPoint: "/admin/docs/invitation",
+      body: "invitation",
+    },
+    {
+      name: "Surat Tugas",
+      condition: "Surat Tugas",
+      endPoint: "/admin/docs/examinerletter",
+      body: "examiner_letter",
+    },
+    {
+      name: "SKL",
+      condition: "SKL",
+      endPoint: "/admin/docs/tempgrad",
+      body: "temp_grad",
+    },
+    {
+      name: "Surat Tugas Penguji",
+      condition: "Surat Tugas Penguji",
+      endPoint: "/admin/docs/advisorletter",
+      body: "advisor_letter",
+    },
+  ];
+
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top",
+    icon: "success",
+    customClass: {
+      popup: "colored-toast",
+    },
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
+  });
+
+  const [triggerFetch, setTriggerFetch] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmitDocument = async (e, nidn, npm) => {
+    e.preventDefault();
+
+    if (!file) {
+      return alert("Mohon pilih file terlebih dahulu.");
+    }
+
+    setIsLoading(true); // Set isLoading to true before making the API request
+
+    const formData = new FormData();
+    formData.append(selectedItem.body, file);
+    formData.append("nidn", nidn);
+    formData.append("npm", npm);
+
+    try {
+      await axios
+        .patch(BASE_URL + selectedItem.endPoint, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then(async () => {
+          Toast.fire({
+            icon: "success",
+            title: "Berkas berhasil diupload!",
+          });
+          await setTriggerFetch(!triggerFetch);
+          setFile(null);
+          handleCloseModal();
+        });
+    } catch (error) {
+      Toast.fire({
+        icon: "error",
+        title: "Terjadi kesalahan saat mengunggah file!",
+      });
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/lecturer/document/list`);
+
+        setData(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, [triggerFetch]);
+
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
+
+  const filteredData =
+    selectedYear === "default"
+      ? data
+      : data.filter((item) => item.student.academic_year === selectedYear);
 
   return (
     <AdminLayout isSidebarOpen={isSidebarOpen}>
       <div className={`min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10 `}>
-        {/* berkas */}
         <div className="berkas p-5 bg-[#f4f6f9] h-full ">
           <div className="judul">
             <h1 className="lg:text-3xl text-3xl mb-5 font-medium text-[#212529]">
@@ -147,8 +208,17 @@ function Berkas() {
             </h1>
           </div>
           <div className="card border-4 border-t-[#007bff] border-x-0 border-b-0 rounded-md bg-white">
-            <div className="p-5">
+            <div className="p-5 flex justify-between">
               <h5 className="text-md text-medium">Berkas</h5>
+              <select
+                value={selectedYear}
+                onChange={handleYearChange}
+                className="bg-white border-2 p-2 rounded-lg border-gray-400"
+              >
+                <option value="default">--Pilih Tahun Akademik--</option>
+                <option value="2020/2021">Tahun Akademik 2020/2021</option>
+                <option value="2021/2022">Tahun Akademik 2021/2022</option>
+              </select>
             </div>
             <hr />
             <div className="p-5">
@@ -314,26 +384,69 @@ function Berkas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData().map((item, index) => (
+                  {filteredData.map((student, index) => (
                     <tr key={index}>
-                      <td>{item.id}</td>
-                      <td>{item.npm}</td>
-                      <td>{item.nama}</td>
-                      <td>{item.prodi}</td>
+                      <td>{index + 1}</td>
+                      <td>{student.student.student_id}</td>
+                      <td>{`${student.student.first_name} ${student.student.last_name}`}</td>
+                      <td>{student.student.major}</td>
                       <td className="flex gap-1 justify-center h-full p-3">
-                        <span className="items-center bg-[#1e7e34] px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#1c7430]">
+                        <span
+                          className={`items-center bg-[#1e7e34] hover:bg-[#1e7e34c0] px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#1c7430] ${
+                            student.document.official_report
+                              ? "cursor-pointer"
+                              : "opacity-50 cursor-not-allowed"
+                          }`}
+                          onClick={() =>
+                            openLink(student.document.official_report)
+                          }
+                        >
                           Berita Acara
                         </span>
-                        <span className="items-center bg-[#007bff] px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#007bff]">
+                        <span
+                          className={`items-center bg-[#007bff] hover:bg-[#007bff83] ${
+                            student.document.invitation
+                              ? "cursor-pointer"
+                              : "opacity-50 cursor-not-allowed"
+                          }  px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#007bff]`}
+                          onClick={() => openLink(student.document.invitation)}
+                        >
                           Undangan
                         </span>
-                        <span className="items-center bg-[#17a2b8] px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#17a2b8]">
+                        <span
+                          className={`items-center bg-[#17a2b8] hover:bg-[#17a3b89a] ${
+                            student.document.examiner_assignment_letter
+                              ? "cursor-pointer"
+                              : "opacity-50 cursor-not-allowed"
+                          } px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#17a2b8]`}
+                          onClick={() =>
+                            openLink(
+                              student.document.examiner_assignment_letter
+                            )
+                          }
+                        >
                           Surat Tugas
                         </span>
-                        <span className="items-center bg-[#ffc107] px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]">
+                        <span
+                          className={`items-center bg-[#ffc107] hover:bg-[#ffc10798] ${
+                            student.document.temp_grad
+                              ? "cursor-pointer"
+                              : "opacity-50 cursor-not-allowed"
+                          } px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]`}
+                          onClick={() => openLink(student.document.temp_grad)}
+                        >
                           SKL
                         </span>
-                        <span className="items-center bg-[#dc3545] px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]">
+                        <span
+                          className={`items-center bg-[#dc3545] hover:bg-[#dc3546b7] ${
+                            student.document.advisor_assignment_letter
+                              ? "cursor-pointer"
+                              : "opacity-50 cursor-not-allowed"
+                          }  px-2 py-1 text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]`}
+                          onClick={() =>
+                            openLink(student.document.advisor_assignment_letter)
+                          }
+                        >
                           Surat Tugas Penguji
                         </span>
                       </td>
@@ -347,37 +460,55 @@ function Berkas() {
                         </button>
                         {dropdownIndex === index && (
                           <div className="transition duration-300 absolute bg-white shadow-lg border rounded translate-x-[-36%]">
-                            <NavLink
-                              to="/dashboard-mahasiswa"
-                              className="flex items-center p-2 text-black text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
-                            >
-                              <span>Berita Acara</span>
-                            </NavLink>
-                            <NavLink
-                              to="/dashboard-mahasiswa"
-                              className="flex items-center p-2 text-black text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
-                            >
-                              <span>Undangan</span>
-                            </NavLink>
-                            <NavLink
-                              to="/dashboard-mahasiswa"
-                              className="flex items-center p-2 text-black text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
-                            >
-                              <span>Surat Tugas</span>
-                            </NavLink>
-                            <NavLink
-                              to="/dashboard-mahasiswa"
-                              className="flex items-center p-2 text-black text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
-                            >
-                              <span>SKL</span>
-                            </NavLink>
-                            <NavLink
-                              to="/dashboard-mahasiswa"
-                              className="flex items-center p-2 text-black text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
-                            >
-                              <span>Surat Tugas Penguji</span>
-                            </NavLink>
+                            {items
+                              .filter((item) => {
+                                if (item.name === "SKL") {
+                                  return (
+                                    student.student.verification_skl !==
+                                    "NOT_VERIFIED"
+                                  );
+                                }
+                                return true;
+                              })
+                              .map((item) => (
+                                <button
+                                  key={item.name}
+                                  onClick={() =>
+                                    handleOpenModal(item, student.student)
+                                  }
+                                  className="p-2 w-full text-sm rounded hover:bg-gray-200 group text-gray-500 hover:text-black"
+                                >
+                                  {item.name}
+                                </button>
+                              ))}
                           </div>
+                        )}
+                        {showModal && (
+                          <Modal
+                            show={showModal}
+                            title="Dokumen Persyaratan"
+                            isLoading={isLoading}
+                            onClosed={handleCloseModal}
+                            onSave={(e) => {
+                              handleSubmitDocument(
+                                e,
+                                selectedStudent.nidn_advisor_one,
+                                selectedStudent.student_id
+                              );
+                            }}
+                          >
+                            <div className="w-[35rem] flex flex-col gap-4 justify-start items-start">
+                              <h1 className="text-black font-bold text-lg">
+                                {selectedItem?.condition}
+                              </h1>
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={handleFileChange}
+                                className="bg-white border-2 border-gray-300 rounded p-2 w-full"
+                              />
+                            </div>
+                          </Modal>
                         )}
                       </td>
                     </tr>

@@ -1,19 +1,15 @@
-import React, { useState } from "react";
-import MainLayouts from "../../layout";
-import Sidebar from "../../components/sidebar";
+import { useEffect, useState } from "react";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BsBell, BsCaretDownFill } from "react-icons/bs";
+import { BsCaretDownFill } from "react-icons/bs";
 import {
   faArrowDown,
   faArrowUp,
-  faBars,
-  faExpandArrowsAlt,
-  faPencilAlt,
-  faSignOutAlt,
-  faTimes,
-  faTrash,
+  faEye,
 } from "@fortawesome/free-solid-svg-icons";
 import AdminLayout from "../../layout/admin-layout";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const PendaftaranMasuk = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -25,6 +21,24 @@ const PendaftaranMasuk = () => {
   const [ShowTanggalLulus, setShowTanggalLulus] = useState(true);
   const [ShowFoto, setShowFoto] = useState(true);
   const [showAksi, setShowAksi] = useState(true);
+  const [student, setStudent] = useState([]);
+  console.log(student);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/students", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        setStudent(response.data.data);
+      } catch (error) {
+        console.log("Error fetching data:", error.message);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
 
@@ -113,7 +127,11 @@ const PendaftaranMasuk = () => {
 
   const [data, setData] = useState([]);
 
-  console.log(data.length);
+  const navigate = useNavigate();
+
+  const handleViewStudentDetail = (studentId) => {
+    navigate(`/admin/pendaftaran/mahasiswa/${studentId}`);
+  };
 
   return (
     <AdminLayout>
@@ -413,27 +431,42 @@ const PendaftaranMasuk = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.length > 0 ? (
-                  sortedData().map((item, index) => (
-                    <tr key={index}>
-                      <td className="no">{item.id}</td>
-                      <td className="text-center npm">{item.npm}</td>
-                      <td className="nama">{item.nama}</td>
-                      <td className="studi">{item.prodi}</td>
-                      <td className="tgl-lulus">{item.tglLulus}</td>
-                      <td className="foto">{item.foto}</td>
-                      <td className="aksi">
-                        <div className="flex gap-1 justify-center h-full p-2">
-                          <span className="items-center bg-[#ffc107] px-2 py-1 rounded text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]">
-                            <FontAwesomeIcon icon={faPencilAlt} />
-                          </span>
-                          <span className="items-center bg-[#dc3545] px-2 py-1 rounded text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]">
-                            <FontAwesomeIcon icon={faTrash} />
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                {student.length > 0 ? (
+                  student.map(
+                    (item, index) =>
+                      item.data.verification === "NOT_VERIFIED" && (
+                        <tr key={index}>
+                          <td className="no">{index + 1}</td>
+                          <td className="text-center npm">
+                            {item.data.student_id}
+                          </td>
+                          <td className="nama">{`${item.data.first_name} ${item.data.last_name}`}</td>
+                          <td className="studi">{item.data.major}</td>
+                          <td className="tgl-lulus">
+                            {item.data.commencement_date}
+                          </td>
+                          <td className="foto">
+                            <img
+                              src={item.document.photo}
+                              alt="foto"
+                              className="w-[150px] h-[200px] border-4 border-black"
+                            />
+                          </td>
+                          <td className="aksi">
+                            <div className="flex gap-1 justify-center h-full p-2">
+                              <span
+                                className="items-center bg-blue-400 text-white px-2 py-1 rounded text-xs font-medium hover:bg-blue-700 transition-all cursor-pointer"
+                                onClick={() =>
+                                  handleViewStudentDetail(item.data.student_id)
+                                }
+                              >
+                                <FontAwesomeIcon icon={faEye} />
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                  )
                 ) : (
                   <tr>
                     <td colSpan={7} className="text-center p-3">

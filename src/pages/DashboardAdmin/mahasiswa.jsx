@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter as Router, NavLink } from "react-router-dom";
 import Sidebar from "../../components/sidebar";
 
@@ -13,10 +13,19 @@ import {
   faPencilAlt,
   faTrash,
   faPlus,
+  faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BsBell, BsCaretDownFill } from "react-icons/bs";
 import AdminLayout from "../../layout/admin-layout";
+import Modal from "../../components/modal";
+import { InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import axios from "axios";
+import { BASE_URL } from "../../config/network";
+import { jwtDecode } from "jwt-decode";
+import Swal from "sweetalert2";
 
 function Mahasiswa() {
   const [collapsed, setCollapsed] = useState(false);
@@ -26,31 +35,39 @@ function Mahasiswa() {
   const [showNamaDosen, setShowNamaDosen] = useState(true);
   const [ShowProgramStudi, setShowProgramStudi] = useState(true);
   const [showAksi, setShowAksi] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/students", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        });
+
+        setStudents(response.data.data);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
-
-  const [data, setData] = useState([
-    {
-      id: 1,
-      npm: "1402020072",
-      nama: "Tara Thania Ananta",
-      prodi: "Teknik Informatika",
-    },
-    {
-      id: 2,
-      npm: "1402020076",
-      nama: "Farhan Nur Fauziy",
-      prodi: "Teknik Informatika",
-    },
-    {
-      id: 3,
-      npm: "1402020019",
-      nama: "Haibraiel Rabany Fast Zenith",
-      prodi: "Teknik Informatika",
-    },
-  ]);
 
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
 
@@ -70,13 +87,11 @@ function Mahasiswa() {
         if (a[column] < b[column]) return 1;
         return 0;
       });
-      // Perbarui sortInfo dengan kolom dan tipe pengurutan yang baru
       setSortInfo({ column, type: "desc" });
     }
     setData(newData);
   };
 
-  // Fungsi untuk mengurutkan data berdasarkan tipe pengurutan dan kolom yang dipilih
   const sortedData = () => {
     if (sortInfo === "asc") {
       return [...data].sort((a, b) => a.nama.localeCompare(b.nama));
@@ -125,6 +140,21 @@ function Mahasiswa() {
     }
   };
 
+  const [selectedYear, setSelectedYear] = useState("default");
+
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
+
+  const filteredData =
+    selectedYear === "default"
+      ? students || []
+      : (students &&
+          students.filter(
+            (item) => item.data.academic_year === selectedYear
+          )) ||
+        [];
+
   return (
     <AdminLayout>
       <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
@@ -136,12 +166,52 @@ function Mahasiswa() {
             </h1>
           </div>
           <div className="card border-4 border-t-[#007bff] border-x-0 border-b-0 rounded-md bg-white">
-            <div className="p-5 flex">
+            <div className="p-5 flex justify-between items-center">
               <h5 className="text-md text-medium">Mahasiswa</h5>
-              <button className="text-white bg-[#0069d9] px-2 py-1 rounded text-xs ml-auto">
-                <FontAwesomeIcon icon={faPlus} className="mr-1" />
-                Tambah
-              </button>
+              <select
+                value={selectedYear}
+                onChange={handleYearChange}
+                className="bg-white border-2 p-2 rounded-lg border-gray-400"
+              >
+                <option value="default">--Pilih Tahun Akademik--</option>
+                <option value="2020/2021">Tahun Akademik 2020/2021</option>
+                <option value="2021/2022">Tahun Akademik 2021/2022</option>
+              </select>
+              <Modal
+                show={showModal}
+                title="Modal Title"
+                onClosed={handleCloseModal}
+              >
+                <div className="w-[35rem] flex flex-col gap-5">
+                  <h1 className="text-black font-bold text-lg">NPM</h1>
+                  <TextField
+                    id="outlined-basic"
+                    placeholder="NPM"
+                    variant="outlined"
+                    className="w-full"
+                  />
+                  <h1 className="text-black font-bold text-lg">
+                    Nama Mahasiswa
+                  </h1>
+                  <TextField
+                    id="outlined-basic"
+                    placeholder="Nama Mahasiswa"
+                    variant="outlined"
+                    className="w-full"
+                  />
+                  <h1 className="text-black font-bold text-lg">
+                    Program Studi
+                  </h1>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                  >
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </div>
+              </Modal>
             </div>
             <hr />
             <div className="p-5">
@@ -337,48 +407,19 @@ function Mahasiswa() {
                         />
                       </div>
                     </th>
-                    <th className="p-2 relative aksi">
-                      Aksi
-                      <div className="absolute bottom-2 right-2">
-                        <FontAwesomeIcon
-                          icon={faArrowUp}
-                          onClick={() => toggleSort("asc", "id")}
-                          className={`text-xs ${
-                            sortInfo.column === "id" && sortInfo.type === "asc"
-                              ? "text-black"
-                              : "text-gray-400"
-                          }`}
-                        />
-                        <FontAwesomeIcon
-                          icon={faArrowDown}
-                          onClick={() => toggleSort("desc", "id")}
-                          className={`text-xs ${
-                            sortInfo.column === "id" && sortInfo.type === "desc"
-                              ? "text-black"
-                              : "text-gray-400"
-                          }`}
-                        />
-                      </div>
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData().map((item, index) => (
+                  {filteredData.map((student, index) => (
                     <tr key={index}>
-                      <td className="no">{item.id}</td>
-                      <td className="text-center npm">{item.npm}</td>
-                      <td className="nama">{item.nama}</td>
-                      <td className="studi">{item.prodi}</td>
-                      <td className="aksi">
-                        <div className="flex gap-1 justify-center h-full p-2">
-                          <span className="items-center bg-[#ffc107] px-2 py-1 rounded text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]">
-                            <FontAwesomeIcon icon={faPencilAlt} />
-                          </span>
-                          <span className="items-center bg-[#dc3545] px-2 py-1 rounded text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]">
-                            <FontAwesomeIcon icon={faTrash} />
-                          </span>
-                        </div>
+                      <td className="no">{index + 1}</td>
+                      <td className="text-center npm">
+                        {student.data.student_id}
                       </td>
+                      <td className="nama">
+                        {student.data.first_name} {student.data.last_name}
+                      </td>
+                      <td className="studi">{student.data.major}</td>
                     </tr>
                   ))}
                 </tbody>

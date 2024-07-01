@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "../../assets/css/style.css";
 import {
   faBars,
@@ -15,9 +15,58 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BsBell, BsCaretDownFill } from "react-icons/bs";
 import AdminLayout from "../../layout/admin-layout";
+import Modal from "../../components/modal";
+import { TextField } from "@mui/material";
+import { BASE_URL } from "../../config/network";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 function Dosen() {
   const [collapsed, setCollapsed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const [lecturer, setlecturer] = useState([]);
+  const [triggerFetch, setTriggerFetch] = useState(false);
+  const [nidn, setNidn] = useState("");
+  const [lecturerData, setLecturerData] = useState({
+    nidn: "",
+    nama: "",
+  });
+
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top",
+    icon: "success",
+    customClass: {
+      popup: "colored-toast",
+    },
+    showConfirmButton: false,
+    timer: 1500,
+    timerProgressBar: true,
+  });
+
+  const handleChange = (e) => {
+    setLecturerData({
+      ...lecturerData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleOpenModalUpdate = () => {
+    setShowModalUpdate(true);
+  };
+
+  const handleCloseModalUpdate = () => {
+    setShowModalUpdate(false);
+  };
 
   const [data, setData] = useState([
     {
@@ -36,6 +85,117 @@ function Dosen() {
       nama: "Andreas Febrian,S.Kom, M.Kom., PhD",
     },
   ]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleSubmitLecturer = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios
+        .post(`${BASE_URL}/lecturer/create`, {
+          nidn: lecturerData.nidn,
+          lecturer_name: lecturerData.nama,
+        })
+        .then(() => {
+          Toast.fire({
+            icon: "success",
+            title: "Berhasil menambah data dosen!",
+          });
+          setTriggerFetch(!triggerFetch);
+          handleCloseModal();
+        });
+
+      setLecturerData({
+        nidn: "",
+        nama: "",
+      });
+    } catch (e) {
+      Toast.fire({
+        icon: "error",
+        title: "Terjadi kesalahan saat menambahkan data dosen!",
+      });
+    }
+  };
+
+  const handleDeleteLecturer = async (e, nidn) => {
+    e.preventDefault();
+    console.log(nidn);
+
+    try {
+      const result = await Swal.fire({
+        title: "Konfirmasi Verifikasi",
+        text: "Apakah Anda yakin ingin menghapus data dosen ini?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Ya",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        await axios.delete(`${BASE_URL}/lecturer/${nidn}`).then(() => {
+          Toast.fire({
+            icon: "success",
+            title: "Berhasil menghapus data dosen!",
+          });
+          setTriggerFetch(!triggerFetch);
+          handleCloseModalUpdate();
+        });
+      }
+    } catch (e) {
+      Toast.fire({
+        icon: "error",
+        title: "Terjadi kesalahan saat menghapus data dosen!",
+      });
+    }
+  };
+
+  const handleUpdateLecturer = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios
+        .patch(`${BASE_URL}/lecturer/update/${nidn}`, {
+          nidn: lecturerData.nidn,
+          lecturer_name: lecturerData.nama,
+        })
+        .then(() => {
+          Toast.fire({
+            icon: "success",
+            title: "Berhasil merubah data dosen!",
+          });
+          setTriggerFetch(!triggerFetch);
+          handleCloseModalUpdate();
+        });
+
+      setLecturerData({
+        nidn: "",
+        nama: "",
+      });
+    } catch (e) {
+      Toast.fire({
+        icon: "error",
+        title: "Terjadi kesalahan saat mengubah data dosen!",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/lecturer/list`);
+
+        if (response.data.data === null) return;
+
+        setlecturer(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, [triggerFetch]);
 
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
 
@@ -69,7 +229,6 @@ function Dosen() {
     if (sortInfo === "desc") {
       return [...data].sort((a, b) => b.nama.localeCompare(a.nama));
     }
-    // Jika tidak ada pengurutan, kembalikan data tanpa pengurutan
     return data;
   };
 
@@ -86,10 +245,42 @@ function Dosen() {
           <div className="card border-4 border-t-[#007bff] border-x-0 border-b-0 rounded-md bg-white">
             <div className="p-5 flex">
               <h5 className="text-md text-medium">Dosen</h5>
-              <button className="text-white bg-[#0069d9] px-2 py-1 rounded text-xs ml-auto">
+              <button
+                onClick={handleOpenModal}
+                className="text-white bg-[#0069d9] px-2 py-1 rounded text-xs ml-auto"
+              >
                 <FontAwesomeIcon icon={faPlus} className="mr-1" />
                 Tambah
               </button>
+              <Modal
+                show={showModal}
+                title="Tambah Data Dosen"
+                onClosed={handleCloseModal}
+                onSave={handleSubmitLecturer}
+              >
+                <div className="w-[35rem] flex flex-col gap-5">
+                  <h1 className="text-black font-bold text-lg">NIDN</h1>
+                  <TextField
+                    id="nidn"
+                    name="nidn"
+                    placeholder="NIDN"
+                    variant="outlined"
+                    className="w-full"
+                    value={lecturerData.nidn}
+                    onChange={handleChange}
+                  />
+                  <h1 className="text-black font-bold text-lg">Nama Dosen</h1>
+                  <TextField
+                    id="nama"
+                    name="nama"
+                    placeholder="Nama Dosen"
+                    variant="outlined"
+                    className="w-full"
+                    value={lecturerData.nama}
+                    onChange={handleChange}
+                  />
+                </div>
+              </Modal>
             </div>
             <hr />
             <div className="p-5">
@@ -195,23 +386,69 @@ function Dosen() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedData().map((item, index) => (
-                    <tr key={index}>
-                      <td className="text-center">{item.id}</td>
-                      <td className="text-center">{item.nidn}</td>
-                      <td>{item.nama}</td>
-                      <td>
-                        <div className="flex gap-1 justify-center h-full p-2">
-                          <span className="items-center bg-[#ffc107] px-2 py-1 rounded text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]">
-                            <FontAwesomeIcon icon={faPencilAlt} />
-                          </span>
-                          <span className="items-center bg-[#dc3545] px-2 py-1 rounded text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]">
-                            <FontAwesomeIcon icon={faTrash} />
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {lecturer.length === null
+                    ? ""
+                    : lecturer.map((item, index) => (
+                        <tr key={index}>
+                          <td className="text-center">{index + 1}</td>
+                          <td className="text-center">{item.nidn}</td>
+                          <td>{item.lecturer_name}</td>
+                          <td>
+                            <div className="flex gap-1 justify-center h-full p-2">
+                              <span
+                                onClick={() => {
+                                  handleOpenModalUpdate();
+                                  setNidn(item.nidn);
+                                }}
+                                className="items-center cursor-pointer hover:bg-[#ba9e4a] bg-[#ffc107] px-2 py-1 rounded text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]"
+                              >
+                                <FontAwesomeIcon icon={faPencilAlt} />
+                              </span>
+                              <Modal
+                                show={showModalUpdate}
+                                title="Ubah Data Dosen"
+                                onClosed={handleCloseModalUpdate}
+                                onSave={handleUpdateLecturer}
+                              >
+                                <div className="w-[35rem] flex flex-col gap-5">
+                                  <h1 className="text-black font-bold text-lg">
+                                    NIDN
+                                  </h1>
+                                  <TextField
+                                    id="nidn"
+                                    name="nidn"
+                                    placeholder="NIDN"
+                                    variant="outlined"
+                                    className="w-full"
+                                    value={lecturerData.nidn}
+                                    onChange={handleChange}
+                                  />
+                                  <h1 className="text-black font-bold text-lg">
+                                    Nama Dosen
+                                  </h1>
+                                  <TextField
+                                    id="nama"
+                                    name="nama"
+                                    placeholder="Nama Dosen"
+                                    variant="outlined"
+                                    className="w-full"
+                                    value={lecturerData.nama}
+                                    onChange={handleChange}
+                                  />
+                                </div>
+                              </Modal>
+                              <span
+                                onClick={(e) => {
+                                  handleDeleteLecturer(e, item.nidn);
+                                }}
+                                className="items-center cursor-pointer hover:bg-[#ae4853]  bg-[#dc3545] px-2 py-1 rounded text-xs font-medium text-white ring-1 ring-inset ring-[#dc3545]"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>

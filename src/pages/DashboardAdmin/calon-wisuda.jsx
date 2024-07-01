@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   BsBell,
@@ -19,6 +19,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import AdminLayout from "../../layout/admin-layout";
 import AdminFooter from "../../components/admin-footer";
+import { BASE_URL } from "../../config/network";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const CalonWisuda = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -30,42 +33,15 @@ const CalonWisuda = () => {
   const [ShowTanggalLulus, setShowTanggalLulus] = useState(true);
   const [ShowFoto, setShowFoto] = useState(true);
   const [showAksi, setShowAksi] = useState(true);
-
+  const token = localStorage.getItem("token");
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
+  const navigate = useNavigate();
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
 
-  const toggleSort = (type, column) => {
-    const newData = [...data];
-    if (type === "asc") {
-      newData.sort((a, b) => {
-        if (a[column] < b[column]) return -1;
-        if (a[column] > b[column]) return 1;
-        return 0;
-      });
-      setSortInfo({ column, type: "asc" });
-    } else if (type === "desc") {
-      newData.sort((a, b) => {
-        if (a[column] > b[column]) return -1;
-        if (a[column] < b[column]) return 1;
-        return 0;
-      });
-      setSortInfo({ column, type: "desc" });
-    }
-    setData(newData);
-  };
-
-  const sortedData = () => {
-    if (sortInfo === "asc") {
-      return [...data].sort((a, b) => a.nama.localeCompare(b.nama));
-    }
-    if (sortInfo === "desc") {
-      return [...data].sort((a, b) => b.nama.localeCompare(a.nama));
-    }
-    return data;
-  };
+  const [dataWithFullName, setDataWithFullName] = useState([]);
 
   const toggleColumn = (column) => {
     switch (column) {
@@ -125,50 +101,81 @@ const CalonWisuda = () => {
     }));
   };
 
-  const [data, setData] = useState([
-    {
-      id: 1,
-      npm: "1502019002",
-      nik: "3201014304010001",
-      nama: "Afifah Nurhayati",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-      ttl: "Bogor / 03 April 2001",
-      jenisKelamin: "Perempuan",
-      alamat:
-        "Perum Dephankam Jl. Asri VA Blok D2 No.6 Pondok Rajeg, Cibinong, Bogor",
-      email: "Afifahnrhyt@gmail.com",
-      noHP: "085311843375",
-      noTelp: "085311843375",
-      sks: 144,
-      ipk: 3.7,
-      judulSkripsi:
-        "PENERAPAN MODEL THE SEVEN PILLARS UNTUK MENGUKUR TINGKAT LITERASI INFORMASI PADA MAHASISWA S-1 UNIVERSITAS YARSI",
-      pembimbingIlmu: "Agus Rifai, SS., M.Ag., Ph.D",
-      pembimbingAgama: "Aya Yahya Maulana, Lc., MH",
-      tglLulus: "25 July 2023",
-    },
-    {
-      id: 2,
-      npm: "1502019004",
-      nik: "3171035001010007",
-      nama: "Aliifah Putri Pravity",
-      prodi: "Perpustakaan dan Sains Informasi (PdSI)",
-      ttl: "Jakarta / 10 January 2001",
-      jenisKelamin: "Perempuan",
-      alamat:
-        "Jl. Cempaka Raya F.5 No. 49 RT.005/009 Cempaka baru, Kemayoran, Jakarta Pusat",
-      email: "liifahput19@gmail.com",
-      noHP: "087787069202",
-      noTelp: "-",
-      sks: 146,
-      ipk: 3.8,
-      judulSkripsi:
-        "Persepsi Pemustaka Tentang Kepuasan Tata Ruang Perpustakaan Universitas YARSI",
-      pembimbingIlmu: "Ario Adi Prakoso, S.Hum., M.A.",
-      pembimbingAgama: "Aya Yahya Maulana, Lc., MH",
-      tglLulus: "29 July 2023",
-    },
-  ]);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/students`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data.data);
+        setData(
+          response.data.data.filter(
+            (data) => data.data.verification === "VERIFIED"
+          )
+        );
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    };
+    fetchData();
+  }, [token]);
+
+  useEffect(() => {
+    const updatedData = data.map((item) => ({
+      ...item,
+      fullName: `${item.data.first_name} ${item.data.last_name}`,
+    }));
+    setDataWithFullName(updatedData);
+  }, [data]);
+
+  const toggleSort = (type, column) => {
+    let newData = [...dataWithFullName];
+    if (type === "asc") {
+      newData.sort((a, b) => {
+        if (a.data[column] && b.data[column]) {
+          return a.data[column].localeCompare(b.data[column]);
+        }
+        return 0;
+      });
+    } else if (type === "desc") {
+      newData.sort((a, b) => {
+        if (a.data[column] && b.data[column]) {
+          return b.data[column].localeCompare(a.data[column]);
+        }
+        return 0;
+      });
+    }
+    setSortInfo({ column, type });
+    setDataWithFullName(newData);
+  };
+
+  const sortedData = () => {
+    if (sortInfo.column) {
+      return [...dataWithFullName].sort((a, b) => {
+        if (a.data[sortInfo.column] && b.data[sortInfo.column]) {
+          if (sortInfo.type === "asc") {
+            return a.data[sortInfo.column].localeCompare(
+              b.data[sortInfo.column]
+            );
+          } else if (sortInfo.type === "desc") {
+            return b.data[sortInfo.column].localeCompare(
+              a.data[sortInfo.column]
+            );
+          }
+        }
+        return 0;
+      });
+    }
+    return dataWithFullName;
+  };
+
+  const handleViewStudentDetail = (studentId) => {
+    navigate(`/admin/pendaftaran/mahasiswa/${studentId}`);
+  };
 
   return (
     <AdminLayout>
@@ -329,18 +336,20 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "npm")}
+                        onClick={() => toggleSort("asc", "student_id")}
                         className={`text-xs ${
-                          sortInfo.column === "npm" && sortInfo.type === "asc"
+                          sortInfo.column === "student_id" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "npm")}
+                        onClick={() => toggleSort("desc", "student_id")}
                         className={`text-xs ${
-                          sortInfo.column === "npm" && sortInfo.type === "desc"
+                          sortInfo.column === "student_id" &&
+                          sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
@@ -352,18 +361,20 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "npm")}
+                        onClick={() => toggleSort("asc", "national_id")}
                         className={`text-xs ${
-                          sortInfo.column === "npm" && sortInfo.type === "asc"
+                          sortInfo.column === "national_id" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "npm")}
+                        onClick={() => toggleSort("desc", "national_id")}
                         className={`text-xs ${
-                          sortInfo.column === "npm" && sortInfo.type === "desc"
+                          sortInfo.column === "national_id" &&
+                          sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
@@ -375,18 +386,20 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "nama")}
+                        onClick={() => toggleSort("asc", "fullName")}
                         className={`text-xs ${
-                          sortInfo.column === "nama" && sortInfo.type === "asc"
+                          sortInfo.column === "fullName" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "nama")}
+                        onClick={() => toggleSort("desc", "fullName")}
                         className={`text-xs ${
-                          sortInfo.column === "nama" && sortInfo.type === "desc"
+                          sortInfo.column === "fullName" &&
+                          sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
@@ -398,18 +411,18 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "prodi")}
+                        onClick={() => toggleSort("asc", "major")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" && sortInfo.type === "asc"
+                          sortInfo.column === "major" && sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "prodi")}
+                        onClick={() => toggleSort("desc", "major")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" &&
+                          sortInfo.column === "major" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -446,9 +459,9 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "tglLulus")}
+                        onClick={() => toggleSort("asc", "gender")}
                         className={`text-xs ${
-                          sortInfo.column === "tglLulus" &&
+                          sortInfo.column === "gender" &&
                           sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
@@ -456,9 +469,9 @@ const CalonWisuda = () => {
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "tglLulus")}
+                        onClick={() => toggleSort("desc", "gender")}
                         className={`text-xs ${
-                          sortInfo.column === "tglLulus" &&
+                          sortInfo.column === "gender" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -471,18 +484,20 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "foto")}
+                        onClick={() => toggleSort("asc", "address")}
                         className={`text-xs ${
-                          sortInfo.column === "foto" && sortInfo.type === "asc"
+                          sortInfo.column === "address" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "foto")}
+                        onClick={() => toggleSort("desc", "address")}
                         className={`text-xs ${
-                          sortInfo.column === "foto" && sortInfo.type === "desc"
+                          sortInfo.column === "address" &&
+                          sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
@@ -494,18 +509,18 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "prodi")}
+                        onClick={() => toggleSort("asc", "email")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" && sortInfo.type === "asc"
+                          sortInfo.column === "email" && sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "prodi")}
+                        onClick={() => toggleSort("desc", "email")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" &&
+                          sortInfo.column === "email" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -518,18 +533,19 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "prodi")}
+                        onClick={() => toggleSort("asc", "phone_number")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" && sortInfo.type === "asc"
+                          sortInfo.column === "phone_number" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "prodi")}
+                        onClick={() => toggleSort("desc", "phone_number")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" &&
+                          sortInfo.column === "phone_number" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -542,18 +558,19 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "prodi")}
+                        onClick={() => toggleSort("asc", "telephone_number")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" && sortInfo.type === "asc"
+                          sortInfo.column === "telephone_number" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "prodi")}
+                        onClick={() => toggleSort("desc", "telephone_number")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" &&
+                          sortInfo.column === "telephone_number" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -566,18 +583,19 @@ const CalonWisuda = () => {
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
                         icon={faArrowUp}
-                        onClick={() => toggleSort("asc", "prodi")}
+                        onClick={() => toggleSort("asc", "credit_course")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" && sortInfo.type === "asc"
+                          sortInfo.column === "credit_course" &&
+                          sortInfo.type === "asc"
                             ? "text-black"
                             : "text-gray-400"
                         }`}
                       />
                       <FontAwesomeIcon
                         icon={faArrowDown}
-                        onClick={() => toggleSort("desc", "prodi")}
+                        onClick={() => toggleSort("desc", "credit_course")}
                         className={`text-xs ${
-                          sortInfo.column === "prodi" &&
+                          sortInfo.column === "credit_course" &&
                           sortInfo.type === "desc"
                             ? "text-black"
                             : "text-gray-400"
@@ -593,7 +611,7 @@ const CalonWisuda = () => {
                     <React.Fragment key={index}>
                       <tr>
                         <td className="no p-3">
-                          {item.id}
+                          {index + 1}
                           <div
                             className="mt-3 ring-2 ring-slate-300 bg-white p-[2px] w-fit rounded-full"
                             onClick={() => toggleRowExpansion(index)}
@@ -605,50 +623,62 @@ const CalonWisuda = () => {
                             )}
                           </div>
                         </td>
-                        <td className="text-center npm p-3">{item.npm}</td>
-                        <td className="text-center nik p-3">{item.nik}</td>
-                        <td className="nama p-3">{item.nama}</td>
-                        <td className="studi p-3">{item.prodi}</td>
-                        <td className="ttl p-3">{item.ttl}</td>
-                        <td className="jenis-kelamin p-3">
-                          {item.jenisKelamin}
+                        <td className="text-center npm p-3">
+                          {item.data.student_id}
                         </td>
-                        <td className="alamat p-3">{item.alamat}</td>
-                        <td className="email p-3">{item.email}</td>
-                        <td className="no-hp p-3">{item.noHP}</td>
-                        <td className="no-telp p-3">{item.noTelp}</td>
-                        <td className="sks p-3">{item.sks}</td>
+                        <td className="text-center nik p-3">
+                          {item.data.national_id}
+                        </td>
+                        <td className="nama p-3">{`${item.data.first_name} ${item.data.last_name}`}</td>
+                        <td className="studi p-3">{item.data.major}</td>
+                        <td className="ttl p-3">{`${item.data.birth_place} / ${item.data.birth_date}`}</td>
+                        <td className="jenis-kelamin p-3">
+                          {item.data.gender}
+                        </td>
+                        <td className="alamat p-3">{item.data.address}</td>
+                        <td className="email p-3">{item.data.email}</td>
+                        <td className="no-hp p-3">{item.data.phone_number}</td>
+                        <td className="no-telp p-3">
+                          {item.data.telephone_number}
+                        </td>
+                        <td className="sks p-3">{item.data.credit_course}</td>
                       </tr>
                       {expandedRows[index] && (
                         <tr>
                           <td colSpan="12" className="p-5">
                             <h5>
-                              <strong className="mr-5">IPK</strong> {item.ipk}
+                              <strong className="mr-5">IPK</strong>{" "}
+                              {item.data.gpa}
                             </h5>
                             <hr className="my-2" />
                             <h5>
                               <strong className="mr-1">Judul Skripsi</strong>{" "}
-                              {item.judulSkripsi}
+                              {item.data.thesis_title}
                             </h5>
                             <hr className="my-2" />
                             <h5>
                               <strong className="mr-1">Pembimbing Ilmu</strong>{" "}
-                              {item.pembimbingIlmu}
+                              {item.data.advisor}
                             </h5>
                             <hr className="my-2" />
                             <h5>
                               <strong className="mr-1">Pembimbing Agama</strong>{" "}
-                              {item.pembimbingAgama}
+                              {item.data.religion_advisor}
                             </h5>
                             <hr className="my-2" />
                             <h5>
                               <strong className="mr-1">Tanggal Lulus</strong>{" "}
-                              {item.tglLulus}
+                              {item.data.commencement_date}
                             </h5>
                             <hr className="my-2" />
                             <h5>
                               <strong className="mr-5">Aksi</strong>
-                              <button className="bg-[#007bff] ring-2 ring-[#007bff] text-white p-1">
+                              <button
+                                onClick={() =>
+                                  handleViewStudentDetail(item.data.student_id)
+                                }
+                                className="bg-[#007bff] ring-2 ring-[#007bff] text-white p-1"
+                              >
                                 <FontAwesomeIcon icon={faEye} /> View
                               </button>
                             </h5>

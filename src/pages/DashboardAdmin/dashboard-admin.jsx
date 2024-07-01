@@ -13,12 +13,29 @@ import Sidebar from "../../components/sidebar";
 import MainLayouts from "../../layout";
 import "../../assets/css/style.css";
 import { BsBell } from "react-icons/bs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminFooter from "../../components/admin-footer";
 import AdminLayout from "../../layout/admin-layout";
+import axios from "axios";
+import { BASE_URL } from "../../config/network";
 
 function DashboardAdmin() {
   const [collapsed, setCollapsed] = useState(false);
+  const [statistics, setStatistics] = useState({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/students/statistic`);
+        console.log(response.data.data);
+        setStatistics(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <AdminLayout>
       <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
@@ -29,7 +46,9 @@ function DashboardAdmin() {
             <div className="card bg-[#ffc107] rounded">
               <div className="flex p-5">
                 <div className="text">
-                  <h1 className="text-3xl mb-3 font-bold">0</h1>
+                  <h1 className="text-3xl mb-3 font-bold">
+                    {statistics.count_not_registed}
+                  </h1>
                   <p>Pendaftaran Masuk</p>
                 </div>
                 <FontAwesomeIcon
@@ -44,7 +63,9 @@ function DashboardAdmin() {
             <div className="card bg-[#17a2b8] rounded text-white">
               <div className="flex p-5">
                 <div className="text">
-                  <h1 className="text-3xl mb-3 font-bold">212</h1>
+                  <h1 className="text-3xl mb-3 font-bold">
+                    {statistics.count_not_verified}
+                  </h1>
                   <p>Mahasiswa</p>
                 </div>
                 <FontAwesomeIcon
@@ -59,7 +80,9 @@ function DashboardAdmin() {
             <div className="card bg-[#28a745] rounded text-white">
               <div className="flex p-5">
                 <div className="text">
-                  <h1 className="text-3xl mb-3 font-bold">138</h1>
+                  <h1 className="text-3xl mb-3 font-bold">
+                    {statistics.count_verif}
+                  </h1>
                   <p>Wisudawan</p>
                 </div>
                 <FontAwesomeIcon
