@@ -20,6 +20,7 @@ import axios from "axios";
 import Modal from "../../components/modal";
 import { openLink } from "../../utils/helpers";
 import Swal from "sweetalert2";
+import Search from "../../components/search";
 
 function Berkas() {
   const [collapsed, setCollapsed] = useState(false);
@@ -29,6 +30,24 @@ function Berkas() {
   const [showModal, setShowModal] = useState(false);
   const [file, setFile] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [semester, setSemester] = useState([]);
+  const [query, setQuery] = useState("");
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/semester/list`);
+
+        if (response.data.data === null) return;
+        setSemester(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const toggleDropdown = (index) => {
     setDropdownIndex(index === dropdownIndex ? null : index);
@@ -176,9 +195,15 @@ function Berkas() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/lecturer/document/list`);
+        const response = await axios.get(`${BASE_URL}/lecturer/document/list?name=${query}`, {
+          signal: controller.signal
+        });
+
+        if(!response.data.data) setData([])
 
         setData(response.data.data);
       } catch (e) {
@@ -186,17 +211,27 @@ function Berkas() {
       }
     };
 
-    fetchData();
-  }, [triggerFetch]);
+    const timeoutId = setTimeout(fetchData, 300); // Menambahkan delay 300ms
+
+    return function () {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [query]);
 
   const handleYearChange = (event) => {
     setSelectedYear(event.target.value);
   };
 
   const filteredData =
-    selectedYear === "default"
-      ? data
-      : data.filter((item) => item.student.academic_year === selectedYear);
+  selectedYear === "default"
+    ? data || []
+    : (data &&
+        data.filter(
+          (item) => {const [year, semester] = selectedYear.split('-');
+            return item.student.academic_year === year && item.student.semester === semester;}
+        )) ||
+      [];
 
   return (
     <AdminLayout isSidebarOpen={isSidebarOpen}>
@@ -216,12 +251,19 @@ function Berkas() {
                 className="bg-white border-2 p-2 rounded-lg border-gray-400"
               >
                 <option value="default">--Pilih Tahun Akademik--</option>
-                <option value="2020/2021">Tahun Akademik 2020/2021</option>
-                <option value="2021/2022">Tahun Akademik 2021/2022</option>
+                {semester.map((data) => (
+                  <option 
+                    key={`${data.academic_year}-${data.semester}`} 
+                  value={`${data.academic_year}-${data.semester}`}>
+                    Tahun Akademik {data.academic_year} Semester {data.semester}{" "}
+                    {data.status === "AKTIF" && "(Aktif)"}
+                  </option>
+                ))}
               </select>
             </div>
             <hr />
             <div className="p-5">
+            <div className="flex items-center justify-between mt-3">
               <h5 className="text-md">
                 show
                 <select
@@ -236,6 +278,11 @@ function Berkas() {
                 </select>
                 entries
               </h5>
+              <div className="flex items-center">
+                <h5 className="text-md">Search:</h5>
+                <Search query={query} setQuery={setQuery} />
+              </div>
+            </div>
               <table className="table-auto w-full tabel-costum mt-5">
                 <thead>
                   <tr className="text-center">
@@ -384,7 +431,7 @@ function Berkas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((student, index) => (
+                  {filteredData.length > 0 ? filteredData.map((student, index) => (
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td>{student.student.student_id}</td>
@@ -512,7 +559,11 @@ function Berkas() {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  )) : <tr>
+                  <td colSpan={7} className="text-center p-3">
+                    Data Kosong
+                  </td>
+                </tr>}
                 </tbody>
               </table>
             </div>

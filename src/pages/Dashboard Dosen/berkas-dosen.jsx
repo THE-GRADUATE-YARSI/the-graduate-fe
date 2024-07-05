@@ -35,16 +35,8 @@ function BerkasDosen() {
           `${BASE_URL}/lecturer/document/list?nidn${npm}`
         );
 
-        const filteredData = response.data.data.filter((item) => {
-          const { document } = item;
-          return (
-            document.official_report &&
-            document.temp_grad &&
-            document.invitation &&
-            document.advisor_assignment_letter
-          );
-        });
-
+        const filteredData = response.data.data;
+        console.log(filteredData);
         setData(filteredData);
       } catch (e) {
         throw new Error(e.message);

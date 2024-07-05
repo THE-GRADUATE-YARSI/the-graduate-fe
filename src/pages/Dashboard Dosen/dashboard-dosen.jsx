@@ -112,7 +112,7 @@ function DashboardDosen() {
               <div className="flex p-5">
                 <div className="text">
                   <h1 className="text-3xl mb-3 font-bold">
-                    {statistic.student}
+                    {statistic.total_temp_grad}
                   </h1>
                   <p>Mahasiswa</p>
                 </div>

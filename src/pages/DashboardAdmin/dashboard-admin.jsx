@@ -18,17 +18,31 @@ import AdminFooter from "../../components/admin-footer";
 import AdminLayout from "../../layout/admin-layout";
 import axios from "axios";
 import { BASE_URL } from "../../config/network";
+import { useNavigate } from 'react-router-dom';
 
 function DashboardAdmin() {
   const [collapsed, setCollapsed] = useState(false);
   const [statistics, setStatistics] = useState({});
+  const [lecturer, setlecturer] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(`${BASE_URL}/students/statistic`);
-        console.log(response.data.data);
         setStatistics(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/lecturer/statistic`);
+        setlecturer(response.data.data.total_lecturer);
       } catch (e) {
         throw new Error(e.message);
       }
@@ -47,7 +61,7 @@ function DashboardAdmin() {
               <div className="flex p-5">
                 <div className="text">
                   <h1 className="text-3xl mb-3 font-bold">
-                    {statistics.count_not_registed}
+                    {statistics.count_not_verified}
                   </h1>
                   <p>Pendaftaran Masuk</p>
                 </div>
@@ -56,7 +70,7 @@ function DashboardAdmin() {
                   className="ml-auto text-7xl text-[rgba(0,0,0,.15)] icon"
                 />
               </div>
-              <button className="bg-black/[.1] p-1 w-full">
+              <button className="bg-black/[.1] p-1 w-full" onClick={() => navigate('/admin/pendaftaran')}>
                 More Info <FontAwesomeIcon icon={faCircleArrowRight} />
               </button>
             </div>
@@ -64,7 +78,9 @@ function DashboardAdmin() {
               <div className="flex p-5">
                 <div className="text">
                   <h1 className="text-3xl mb-3 font-bold">
-                    {statistics.count_not_verified}
+                    {statistics.count_not_registed +
+                      statistics.count_not_verified +
+                      statistics.count_verif}
                   </h1>
                   <p>Mahasiswa</p>
                 </div>
@@ -73,7 +89,7 @@ function DashboardAdmin() {
                   className="ml-auto text-7xl text-[rgba(0,0,0,.15)] icon"
                 />
               </div>
-              <button className="bg-black/[.1] p-1 w-full">
+              <button className="bg-black/[.1] p-1 w-full" onClick={() => navigate('/admin/mahasiswa')}>
                 More Info <FontAwesomeIcon icon={faCircleArrowRight} />
               </button>
             </div>
@@ -90,14 +106,14 @@ function DashboardAdmin() {
                   className="ml-auto text-7xl text-[rgba(0,0,0,.15)] icon"
                 />
               </div>
-              <button className="bg-black/[.1] p-1 w-full">
+              <button className="bg-black/[.1] p-1 w-full" onClick={( ) => navigate('/admin/calon-wisuda')}>
                 More Info <FontAwesomeIcon icon={faCircleArrowRight} />
               </button>
             </div>
             <div className="card bg-[#dc3545] rounded text-white">
               <div className="flex p-5">
                 <div className="text">
-                  <h1 className="text-3xl mb-3 font-bold">24</h1>
+                  <h1 className="text-3xl mb-3 font-bold">{lecturer}</h1>
                   <p>Dosen</p>
                 </div>
                 {/* <FontAwesomeIcon
@@ -105,7 +121,7 @@ function DashboardAdmin() {
                   className="ml-auto text-7xl text-[rgba(0,0,0,.15)]"
                 /> */}
               </div>
-              <button className="bg-black/[.1] p-1 w-full">
+              <button className="bg-black/[.1] p-1 w-full" onClick={() => navigate('/admin/dosen')}>
                 More Info <FontAwesomeIcon icon={faCircleArrowRight} />
               </button>
             </div>

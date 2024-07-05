@@ -1,31 +1,19 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter as Router, NavLink } from "react-router-dom";
-import Sidebar from "../../components/sidebar";
+import { useEffect, useRef, useState } from "react";
 
 import "../../assets/css/style.css";
-import {
-  faBars,
-  faTimes,
-  faExpandArrowsAlt,
-  faSignOutAlt,
-  faArrowUp,
-  faArrowDown,
-  faPencilAlt,
-  faTrash,
-  faPlus,
-  faTimesCircle,
-} from "@fortawesome/free-solid-svg-icons";
-import { faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
+import { DownloadTableExcel } from "react-export-table-to-excel";
+import { CSVLink } from "react-csv";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BsBell, BsCaretDownFill } from "react-icons/bs";
+import { BsCaretDownFill } from "react-icons/bs";
 import AdminLayout from "../../layout/admin-layout";
 import Modal from "../../components/modal";
-import { InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { MenuItem, Select, TextField } from "@mui/material";
 import axios from "axios";
 import { BASE_URL } from "../../config/network";
-import { jwtDecode } from "jwt-decode";
-import Swal from "sweetalert2";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 function Mahasiswa() {
   const [collapsed, setCollapsed] = useState(false);
@@ -37,11 +25,58 @@ function Mahasiswa() {
   const [showAksi, setShowAksi] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [students, setStudents] = useState([]);
+  const tableRef = useRef(null);
+  const [semester, setSemester] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/semester/list`);
+
+        if (response.data.data === null) return;
+        console.log(response.data.data);
+        setSemester(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const csvData = students.map((item, index) => ({
+    No: index + 1,
+    NPM: item.data.student_id,
+    "Nama Mahasiswa": item.data.first_name + item.data.last_name,
+    "Program Studi": item.data.major,
+  }));
+
+  const headers = [
+    { label: "No", key: "No" },
+    { label: "NPM", key: "NPM" },
+    { label: "Nama Mahasiswa", key: "Nama Mahasiswa" },
+    { label: "Program Studi", key: "Program Studi" },
+  ];
+
+  const handlePDF = () => {
+    const doc = new jsPDF();
+    doc.autoTable({ html: tableRef.current });
+    doc.save("students.pdf");
+  };
+
+  const handleCopy = () => {
+    const range = document.createRange();
+    range.selectNode(tableRef.current);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges();
+  };
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/students", {
+        const response = await axios.get(`${BASE_URL}/students`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + localStorage.getItem("token"),
@@ -151,9 +186,64 @@ function Mahasiswa() {
       ? students || []
       : (students &&
           students.filter(
-            (item) => item.data.academic_year === selectedYear
+            (item) => {const [year, semester] = selectedYear.split('-');
+              return item.data.academic_year === year && item.data.semester === semester;}
           )) ||
         [];
+
+  const handlePrint = () => {
+    const printWindow = window.open("", "_blank");
+
+    const tableHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>NPM</th>
+                  <th>Nama</th>
+                  <th>Program Studi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData
+                  .map(
+                    (student) => `
+                  <tr>
+                    <td>${student.data.student_id}</td>
+                    <td>${student.data.first_name} ${student.data.last_name}</td>
+                    <td>${student.data.major}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+
+    printWindow.document.write(`
+            <html>
+              <head>
+                <title>Print</title>
+                <style>
+                  table { 
+                    border-collapse: collapse; 
+                    width: 100%; 
+                  }
+                  th, td { 
+                    border: 1px solid black; 
+                    padding: 8px; 
+                    text-align: left; 
+                  }
+                </style>
+              </head>
+              <body>
+                ${tableHTML}
+              </body>
+            </html>
+          `);
+
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   return (
     <AdminLayout>
@@ -174,8 +264,14 @@ function Mahasiswa() {
                 className="bg-white border-2 p-2 rounded-lg border-gray-400"
               >
                 <option value="default">--Pilih Tahun Akademik--</option>
-                <option value="2020/2021">Tahun Akademik 2020/2021</option>
-                <option value="2021/2022">Tahun Akademik 2021/2022</option>
+                {semester.map((data) => (
+                  <option 
+                    key={`${data.academic_year}-${data.semester}`} 
+                  value={`${data.academic_year}-${data.semester}`}>
+                    Tahun Akademik {data.academic_year} Semester {data.semester}{" "}
+                    {data.status === "AKTIF" && "(Aktif)"}
+                  </option>
+                ))}
               </select>
               <Modal
                 show={showModal}
@@ -230,19 +326,40 @@ function Mahasiswa() {
                 entries
               </h5>
               <div className="flex mt-3 relative">
-                <button className="bg-gray-500 rounded-s py-2 px-3 text-white">
+                <button
+                  className="bg-gray-500 rounded-s py-2 px-3 text-white"
+                  onClick={handleCopy}
+                >
                   Copy
                 </button>
                 <button className="bg-gray-500  py-2 px-3 text-white">
-                  CSV
+                  <CSVLink
+                    headers={headers}
+                    data={csvData}
+                    filename="students.csv"
+                  >
+                    CSV
+                  </CSVLink>
                 </button>
                 <button className="bg-gray-500  py-2 px-3 text-white">
-                  Excel
+                  <DownloadTableExcel
+                    filename="mahasiswa table"
+                    sheet="mahasiswa"
+                    currentTableRef={tableRef.current}
+                  >
+                    Excel
+                  </DownloadTableExcel>
                 </button>
-                <button className="bg-gray-500  py-2 px-3 text-white">
+                <button
+                  className="bg-gray-500  py-2 px-3 text-white"
+                  onClick={handlePDF}
+                >
                   PDF
                 </button>
-                <button className="bg-gray-500  py-2 px-3 text-white">
+                <button
+                  className="bg-gray-500  py-2 px-3 text-white"
+                  onClick={handlePrint}
+                >
                   Print
                 </button>
                 <button
@@ -307,7 +424,10 @@ function Mahasiswa() {
                   </div>
                 )}
               </div>
-              <table className="table-auto w-full tabel-costum mt-5">
+              <table
+                ref={tableRef}
+                className="table-auto w-full tabel-costum mt-5"
+              >
                 <thead>
                   <tr className="text-center">
                     <th className="p-2 w-[5%] relative z-10 no">

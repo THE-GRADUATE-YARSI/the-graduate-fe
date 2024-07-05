@@ -22,6 +22,7 @@ import AdminFooter from "../../components/admin-footer";
 import { BASE_URL } from "../../config/network";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Search from "../../components/search";
 
 const CalonWisuda = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -36,6 +37,7 @@ const CalonWisuda = () => {
   const token = localStorage.getItem("token");
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
   const navigate = useNavigate();
+  const [query, setQuery] = useState("");
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -104,14 +106,19 @@ const CalonWisuda = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/students`, {
+        const response = await axios.get(`${BASE_URL}/students?name=${query}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal
         });
-        console.log(response.data.data);
+
+        if(!response.data.data) setData([])
+
         setData(
           response.data.data.filter(
             (data) => data.data.verification === "VERIFIED"
@@ -121,8 +128,14 @@ const CalonWisuda = () => {
         throw new Error(error.message);
       }
     };
-    fetchData();
-  }, [token]);
+
+    const timeoutId = setTimeout(fetchData, 300); // Menambahkan delay 300ms
+  
+    return function () {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [query]);
 
   useEffect(() => {
     const updatedData = data.map((item) => ({
@@ -177,6 +190,11 @@ const CalonWisuda = () => {
     navigate(`/admin/pendaftaran/mahasiswa/${studentId}`);
   };
 
+  useEffect(() => {
+    console.log("Query changed:", query);
+    console.log("Filtered students:", data);
+  }, [query, data]);
+
   return (
     <AdminLayout>
       <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
@@ -205,10 +223,8 @@ const CalonWisuda = () => {
               </h5>
               <div className="flex items-center">
                 <h5 className="text-md">Search:</h5>
-                <input
-                  type="search"
-                  className="py-1 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block w-full rounded-sm sm:text-sm focus:ring-1 ms-1"
-                />
+                <Search query={query} setQuery={setQuery} />
+
               </div>
             </div>
             <div className="flex mt-3 relative">
@@ -305,10 +321,11 @@ const CalonWisuda = () => {
                 </div>
               )}
             </div>
-            <table className="table-auto w-full tabel-costum">
+            <div className="overflow-x-auto">
+            <table className="w-fit tabel-costum">
               <thead>
                 <tr className="text-center">
-                  <th className="p-2  w-[5%] relative z-10 no">
+                  <th className="p-2 w-[5%] relative z-10 no">
                     No
                     <div className="absolute bottom-2 right-2">
                       <FontAwesomeIcon
@@ -696,6 +713,8 @@ const CalonWisuda = () => {
                 )}
               </tbody>
             </table>
+            </div>
+
             <div className="flex items-center justify-between my-3">
               <span>Showing 0 to 0 of 0 entries</span>
               <div className="flex items-center">

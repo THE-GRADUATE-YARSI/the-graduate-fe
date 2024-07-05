@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "../../assets/css/style.css";
 import {
-  faBars,
-  faTimes,
-  faExpandArrowsAlt,
-  faSignOutAlt,
-  faPenAlt,
   faPencilAlt,
   faTrash,
   faArrowDown,
@@ -13,7 +8,6 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BsBell, BsCaretDownFill } from "react-icons/bs";
 import AdminLayout from "../../layout/admin-layout";
 import Modal from "../../components/modal";
 import { TextField } from "@mui/material";
@@ -53,6 +47,10 @@ function Dosen() {
   };
 
   const handleOpenModal = () => {
+    setLecturerData({
+      nidn: "",
+      nama: "",
+    });
     setShowModal(true);
   };
 
@@ -60,8 +58,19 @@ function Dosen() {
     setShowModal(false);
   };
 
-  const handleOpenModalUpdate = () => {
-    setShowModalUpdate(true);
+  const handleOpenModalUpdate = async (nidn) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/lecturer/detail/${nidn}`);
+      if (response.data.data) {
+        setLecturerData({
+          nidn: response.data.data.nidn,
+          nama: response.data.data.lecturer_name,
+        });
+      }
+      setShowModalUpdate(true);
+    } catch (error) {
+      console.error("Error fetching lecturer data:", error);
+    }
   };
 
   const handleCloseModalUpdate = () => {
@@ -119,7 +128,6 @@ function Dosen() {
 
   const handleDeleteLecturer = async (e, nidn) => {
     e.preventDefault();
-    console.log(nidn);
 
     try {
       const result = await Swal.fire({
@@ -397,8 +405,7 @@ function Dosen() {
                             <div className="flex gap-1 justify-center h-full p-2">
                               <span
                                 onClick={() => {
-                                  handleOpenModalUpdate();
-                                  setNidn(item.nidn);
+                                  handleOpenModalUpdate(item.nidn);
                                 }}
                                 className="items-center cursor-pointer hover:bg-[#ba9e4a] bg-[#ffc107] px-2 py-1 rounded text-xs font-medium text-black ring-1 ring-inset ring-[#ffc107]"
                               >

@@ -187,6 +187,21 @@ const Sidebar = ({ isOpen }) => {
               </li>
               <li>
                 <NavLink
+                  to="/admin/semester"
+                  className="sidebar-item flex items-center p-2 text-black rounded-lg hover:bg-gray-200 group active:bg-blue-600 active:text-white"
+                  current-page={
+                    location.pathname === "/admin/semester" ? "true" : "false"
+                  }
+                >
+                  <FontAwesomeIcon
+                    icon={faFile}
+                    className={`${isOpen ? "" : "p-3 mx-auto text-xl"} `}
+                  />
+                  {isOpen && <span className="ms-3">Semester</span>}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
                   to="/admin/pendaftaran"
                   className="sidebar-item flex items-center p-2 text-black rounded-lg hover:bg-gray-200 group active:bg-blue-600 active:text-white"
                   current-page={

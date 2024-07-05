@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BsCaretDownFill } from "react-icons/bs";
@@ -10,6 +10,12 @@ import {
 import AdminLayout from "../../layout/admin-layout";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../../config/network";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { DownloadTableExcel } from "react-export-table-to-excel";
+import { CSVLink } from "react-csv";
+import Search from "../../components/search";
 
 const PendaftaranMasuk = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -22,23 +28,97 @@ const PendaftaranMasuk = () => {
   const [ShowFoto, setShowFoto] = useState(true);
   const [showAksi, setShowAksi] = useState(true);
   const [student, setStudent] = useState([]);
-  console.log(student);
+  const [semester, setSemester] = useState([]);
+  const tableRef = useRef(null);
+
+  const csvData = student.map((item, index) => ({
+    No: index + 1,
+    NPM: item.data.student_id,
+    "Nama Mahasiswa": item.data.first_name + item.data.last_name,
+    "Program Studi": item.data.major,
+  }));
+
+  const headers = [
+    { label: "No", key: "No" },
+    { label: "NPM", key: "NPM" },
+    { label: "Nama Mahasiswa", key: "Nama Mahasiswa" },
+    { label: "Program Studi", key: "Program Studi" },
+  ];
+
+  const handlePDF = () => {
+    const doc = new jsPDF();
+    doc.autoTable({ html: tableRef.current });
+    doc.save("students.pdf");
+  };
+
+  const handleCopy = () => {
+    const range = document.createRange();
+    range.selectNode(tableRef.current);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges();
+  };
+
+  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/students", {
+        const response = await axios.get(`${BASE_URL}/semester/list`);
+        console.log(response.data.data)
+
+        if (response.data.data === null) return;
+        setSemester(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const [selectedYear, setSelectedYear] = useState("default");
+  const [query, setQuery] = useState("");
+
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
+  
+  useEffect(() => {
+    const controller = new AbortController();
+  
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/students?name=${query}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
+          signal: controller.signal
         });
 
-        setStudent(response.data.data);
+        if(!response.data.data) setStudent([])
+  
+        setStudent(response.data.data.filter(student => student.data.verification === "NOT_VERIFIED"));
       } catch (error) {
-        console.log("Error fetching data:", error.message);
+        if (error.name !== 'CanceledError') {
+          console.log("Error fetching data:", error.message);
+        }
       }
     };
-    fetchData();
-  }, []);
+  
+    const timeoutId = setTimeout(fetchData, 300); // Menambahkan delay 300ms
+  
+    return function () {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [query]);
+
+  useEffect(() => {
+    console.log("Query changed:", query);
+    console.log("Filtered students:", student);
+  }, [query, student]);
 
   const [sortInfo, setSortInfo] = useState({ column: "id", type: "asc" });
 
@@ -133,16 +213,98 @@ const PendaftaranMasuk = () => {
     navigate(`/admin/pendaftaran/mahasiswa/${studentId}`);
   };
 
+  const filteredData =
+  selectedYear === "default"
+    ? student || []
+    : (student &&
+        student.filter(
+          (item) => {const [year, semester] = selectedYear.split('-');
+            return item.data.academic_year === year && item.data.semester === semester;}
+        )) ||
+      [];
+
+      const handlePrint = () => {
+        const printWindow = window.open("", "_blank");
+    
+        const tableHTML = `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>NPM</th>
+                      <th>Nama</th>
+                      <th>Program Studi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredData
+                      .map(
+                        (student) => `
+                      <tr>
+                        <td>${student.data.student_id}</td>
+                        <td>${student.data.first_name} ${student.data.last_name}</td>
+                        <td>${student.data.major}</td>
+                      </tr>
+                    `
+                      )
+                      .join("")}
+                  </tbody>
+                </table>
+              `;
+    
+        printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>Print</title>
+                    <style>
+                      table { 
+                        border-collapse: collapse; 
+                        width: 100%; 
+                      }
+                      th, td { 
+                        border: 1px solid black; 
+                        padding: 8px; 
+                        text-align: left; 
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    ${tableHTML}
+                  </body>
+                </html>
+              `);
+    
+        printWindow.document.close();
+        printWindow.print();
+      };
+
   return (
     <AdminLayout>
       <div className="min-h-[93vh] bg-[#f4f6f9] h-full ml-auto pb-10">
         <section className="konten-persyaratan bg-[#f4f6f9] pt-1 px-3 h-full">
           <h1 className="text-xl my-4">Pendaftaran Masuk</h1>
+   
           <div
             className="bg-white border-t-4 border-blue-600 rounded-b text-black px-4 py-3 shadow-sm w-full"
             role="alert"
           >
+            <div className="p-2 flex justify-between items-center">
             <h3>Pendaftaran Masuk</h3>
+            <select
+                value={selectedYear}
+                onChange={handleYearChange}
+                className="bg-white border-2 p-2 rounded-lg border-gray-400"
+              >
+                <option value="default">--Pilih Tahun Akademik--</option>
+                {semester.map((data) => (
+                  <option 
+                    key={`${data.academic_year}-${data.semester}`} 
+                  value={`${data.academic_year}-${data.semester}`}>
+                    Tahun Akademik {data.academic_year} Semester {data.semester}{" "}
+                    {data.status === "AKTIF" && "(Aktif)"}
+                  </option>
+                ))}
+              </select>
+              </div>
             <hr className="my-2" />
             <div className="flex items-center justify-between mt-3">
               <h5 className="text-md">
@@ -161,22 +323,31 @@ const PendaftaranMasuk = () => {
               </h5>
               <div className="flex items-center">
                 <h5 className="text-md">Search:</h5>
-                <input
-                  type="search"
-                  className="py-1 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block w-full rounded-sm sm:text-sm focus:ring-1 ms-1"
-                />
+                <Search query={query} setQuery={setQuery} />
               </div>
             </div>
             <div className="flex mt-3 relative">
-              <button className="bg-gray-500 rounded-s py-2 px-3 text-white">
+              <button onClick={handleCopy} className="bg-gray-500 rounded-s py-2 px-3 text-white">
                 Copy
               </button>
-              <button className="bg-gray-500  py-2 px-3 text-white">CSV</button>
+              <button className="bg-gray-500  py-2 px-3 text-white"><CSVLink
+                    headers={headers}
+                    data={csvData}
+                    filename="students.csv"
+                  >
+                    CSV
+                  </CSVLink></button>
               <button className="bg-gray-500  py-2 px-3 text-white">
-                Excel
+              <DownloadTableExcel
+                    filename="mahasiswa table"
+                    sheet="mahasiswa"
+                    currentTableRef={tableRef.current}
+                  >
+                    Excel
+                  </DownloadTableExcel>
               </button>
-              <button className="bg-gray-500  py-2 px-3 text-white">PDF</button>
-              <button className="bg-gray-500  py-2 px-3 text-white">
+              <button className="bg-gray-500  py-2 px-3 text-white" onClick={handlePDF}>PDF</button>
+              <button className="bg-gray-500  py-2 px-3 text-white" onClick={handlePrint}>
                 Print
               </button>
               <button
@@ -261,7 +432,7 @@ const PendaftaranMasuk = () => {
                 </div>
               )}
             </div>
-            <table className="table-auto w-full tabel-costum">
+            <table ref={tableRef} className="table-auto w-full tabel-costum">
               <thead>
                 <tr className="text-center">
                   <th className="p-2  w-[5%] relative z-10 no">
@@ -431,8 +602,8 @@ const PendaftaranMasuk = () => {
                 </tr>
               </thead>
               <tbody>
-                {student.length > 0 ? (
-                  student.map(
+                {filteredData.length > 0 ?  (
+                  filteredData.map(
                     (item, index) =>
                       item.data.verification === "NOT_VERIFIED" && (
                         <tr key={index}>
@@ -493,5 +664,7 @@ const PendaftaranMasuk = () => {
     </AdminLayout>
   );
 };
+
+
 
 export default PendaftaranMasuk;

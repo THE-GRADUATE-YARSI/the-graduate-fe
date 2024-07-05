@@ -22,6 +22,9 @@ import Register from "../../pages/Auth/Register";
 import DetailMahasiswa from "../../layout/detail-mahasiswa";
 import SKL from "../../pages/DashboardAdmin/skl";
 import CetakIjazah from "../../pages/PengambilanIjazahMahasiswa/cetak-ijazah";
+import ForgotPassword from "../../pages/Auth/ForgotPassword";
+import ResetPassword from "../../pages/Auth/ResetPassword";
+import Semester from "../../pages/DashboardAdmin/semester";
 
 const Router = () => {
   return (
@@ -30,6 +33,8 @@ const Router = () => {
       <Route path="/persyaratan" element={<Persyaratan />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       {/* Dashboard Admin */}
       <Route path="/admin/dashboard-admin" element={<DashboardAdmin />} />
       <Route path="/admin/dosen" element={<Dosen />} />
@@ -40,6 +45,7 @@ const Router = () => {
       <Route path="/admin/skl" element={<SKL />} />
       <Route path="/admin/persyaratan" element={<PersyaratanAdmin />} />
       <Route path="/admin/calon-wisuda" element={<CalonWisuda />} />
+      <Route path="/admin/semester" element={<Semester />} />
       <Route
         path="/admin/pendaftaran/mahasiswa/:studentId"
         element={<DetailMahasiswa />}

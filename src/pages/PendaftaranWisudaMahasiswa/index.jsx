@@ -59,6 +59,7 @@ const PendaftaranWisuda = () => {
   const [showSubmitButton, setShowSubmitButton] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [triggerFetch, setTriggerFetch] = useState(false);
+  const [semester, setSemester] = useState([]);
   const token = localStorage.getItem("token");
   const decodedToken = jwtDecode(token);
   const { npm, first_name, last_name, email } = decodedToken;
@@ -190,7 +191,7 @@ const PendaftaranWisuda = () => {
     },
   ]);
 
- 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchDataDocs = useCallback(async () => {
     if (token) {
       try {
@@ -496,6 +497,20 @@ const PendaftaranWisuda = () => {
         const response = await axios.get(`${BASE_URL}/lecturer/list`);
 
         setLecturer(response.data.data);
+      } catch (e) {
+        throw new Error(e.message);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/semester/list`);
+
+        setSemester(response.data.data);
       } catch (e) {
         throw new Error(e.message);
       }
@@ -848,8 +863,11 @@ const PendaftaranWisuda = () => {
                         <option value="default" disabled>
                           --Pilih Tahun Akademik--
                         </option>
-                        <option value="2020/2021">2020/2021</option>
-                        <option value="2021/2022">2021/2022</option>
+                        {semester.map((data) => (
+                          <option key={data.academic_year} value={data.academic_year}>
+                            {data.academic_year}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   </div>
